@@ -1,0 +1,200 @@
+---
+title: "Class07: Machine Learning 1"
+author: "Fan Wu(PID:A15127541)"
+format: pdf
+---
+
+Today we will explore some fundamental machine learning methods including clustering and dimensionality reduction
+
+## K-means clustering
+
+To see how this works, let's first makeup some data to cluster where we know what the answer should be.
+We can use the `rnorm()` function to help here:
+
+```{r}
+hist(rnorm(500, mean = 5))
+```
+
+```{r}
+x <- c(rnorm(30, mean = -3), rnorm(30, mean = 3))
+#`rev()` means reverse
+y <- rev(x)
+```
+
+```{r}
+x <- cbind(x,y)
+plot(x)
+```
+
+The main function for K-means clustering in "base R" is `kmeans()`
+
+```{r} 
+k <- kmeans(x, centers = 2)
+k
+```
+
+To get at the results of the returned list object we can use the dollar `$` syntax
+
+> Q. How many points are in each cluster?
+
+```{r}
+k$size
+```
+
+> Q. What 'component' of your result object details
+      -cluster assigment/membership
+      -cluster center
+      
+```{r}
+k$cluster
+```
+
+```{r}
+k$centers
+```
+
+> Q. Make a cluster result figure of the data colored by cluster membership and show cluster centers.
+
+```{r}
+plot(x, col=c("red", "blue"))
+```
+
+```{r}
+plot(x, col= k$cluster, pch = 16)
+
+points(k$centers, col = "blue", pch =15, cex = 2)
+# `cex` is character expansion, `pch` changes the shape of the plot
+```
+
+K-means clustering is very popular as it is very fast and relatively straight forward: it takes numeric data as input and returns the cluster membership vector etc. 
+
+The "issue" is we tell `kmeans()` how many clusters we want!
+
+> Q. Run kmeans again and cluster into 4 groups/clusters and plot results like we did above
+
+```{r}
+n<- NULL
+for (i in 1:5){
+  n <- c(n, kmeans(x,centers = i)$tot.withinss)
+}
+plot(n, type = "b")
+```
+
+## Hierarchical Clustering
+
+The main "base R" function for Hierarchical Clustering is called `hclust()`. Here we can't just input our data, we need to first calculate a distance matrix(e.g. `dist()`) for our data and use this as input to `hclust()`
+
+```{r}
+d <- dist(x)
+hc <- hclust(d)
+hc
+```
+
+There is a plot method for hclust results lets try it
+This is better than `kmeans()` because it reveals similarity, and doesn't force center on things
+
+```{r}
+plot(hc)
+abline(h = 8, col = "red")
+```
+
+To get our cluster "membership" vector (i.e. our main clustering result) we can "cut" the tree at a given height or at a height that yields a given "k" groups
+```{r}
+cutree(hc, h = 8)
+```
+
+```{r}
+grps <- cutree(hc, k = 2)
+```
+
+> Q. Plot the data with our hclust result coloring
+
+```{r}
+plot (x, col = grps)
+```
+
+#Principle Component Analysis(PCA)
+
+## PCA of UK food data
+
+Import food data from an online CSV file:
+
+```{r}
+url <- "https://tinyurl.com/UK-foods"
+x <- read.csv(url)
+head(x)
+```
+```{r}
+rownames(x) <- x[,1]
+x <- x[,-1]
+x
+```
+
+
+```{r}
+# read properly and add row names while reading
+x <- read.csv(url, row.names = 1)
+x
+```
+
+Some base figures
+
+```{r}
+barplot(as.matrix(x), beside=T, col=rainbow(nrow(x)))
+```
+
+```{r}
+barplot(as.matrix(x), col=rainbow(nrow(x)))
+```
+
+There is one plot that can be useful for small datasets: 
+
+```{r}
+pairs(x, col=rainbow(10), pch=16)
+```
+
+> Main point: It can be difficult to spot major trends and patterns even in relatively small multivariate datasets ( here we only have 17 dimensions, typically we have 1000s) 
+
+
+## PCA to the rescue
+
+The main function in "base R" for PCA is called `prcomp()`
+
+I will take the transpose of our data so the "foods" are in the columns
+```{r}
+#PCA on food, so we need to take transpose of x, to get food to be column
+pca <- prcomp( t(x) )
+summary(pca)
+# look at the "proportion of variance" to see how much of the spread pca cover
+```
+
+```{r}
+#$x tells us where the country lies on PCA
+pca$x
+cols <- c("orange", "red", "blue","darkgreen")
+plot(pca$x[,1],pca$x[,2], col = cols, pch = 16)
+# this plot is showing that along PC1, 3 countries are similar, while PC1 captures 67% of the data
+# look at contributions can tell us what food caused the difference
+```
+
+```{r}
+library(ggplot2)
+ggplot(pca$x) + 
+  aes(PC1, PC2) + 
+  geom_point(col = cols)
+```
+
+```{r}
+pca$rotation
+# a positive number in PC1 means it shows difference in this category
+```
+
+```{r}
+ggplot(pca$rotation) +
+  aes(PC1, rownames(pca$rotation)) +
+  geom_col()
+```
+
+PCA looks super useful and we will come back to describe this further next lab :-)
+
+

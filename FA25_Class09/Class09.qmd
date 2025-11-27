@@ -1,0 +1,206 @@
+---
+title: "Class 09 : Structural Bioinformatics (Part 1)"
+author: "Fan Wu(PID: A15127541)"
+format: html
+---
+
+The main database for structural biology is called the PDB. Let's have a look at what it contains:
+
+> Q1: What percentage of structures in the PDB are solved by X-Ray and Electron Microscopy.
+
+```{r}
+stats <- read.csv("Data Export Summary.csv")
+stats
+```
+
+```{r}
+stats$Total
+```
+Oh, these are characters, not numeric
+
+```{r}
+as.numeric(sub(",","",stats$Total))
+```
+**So use Tydeverse to read in csv!**
+not the base `read.csv`, which read in ","
+
+```{r pdbstats,message=FALSE}
+library(readr)
+
+stats<-read_csv("Data Export Summary.csv")
+stats
+```
+
+```{r}
+Total_struct<- sum(stats$Total)
+
+Total_Xray <- sum(stats$`X-ray`)
+
+Total_EM <- sum(stats$EM)
+```
+
+```{r}
+Xray_percent<- Total_Xray/Total_struct*100
+
+EM_percent<- Total_EM/Total_struct*100
+
+```
+
+X ray contributes `r round(Xray_percent,2)` % of total structures, while EM contributes `r round(EM_percent,2)` % of total structures
+> Q2: What proportion of structures in the PDB are protein?
+
+```{r}
+#Find which row has data for protein/ protein_only
+rows_of_protein <- grep("Protein", stats$`Molecular Type`)
+
+rows_of_protein_only <-grep("Protein \\(only\\)", stats$`Molecular Type`, ignore.case = TRUE)
+#calculate sum of protein available
+Total_protein <- stats$Total[rows_of_protein]
+
+Protein_only <- stats$Total[rows_of_protein_only]
+  
+Protein_percent <- sum(Total_protein) / Total_struct * 100
+
+Protein_only_percent <-Protein_only / Total_struct * 100
+
+#Total_protein <- stats$Total[1]
+# Total_protein/ Total_struct
+```
+`r round(Protein_percent, 2)` % of structures in PDB are protein
+`r round(Protein_only_percent, 2)`% of structures in PDB are protein only
+
+## Exploring PDB structures
+
+> Q3: Type HIV in the PDB website search box on the home page and determine how many HIV-1 protease structures are in the current PDB?
+
+There are 1150
+
+Package for structural bioinformatics
+```{r}
+library(bio3d)
+
+hiv <- read.pdb("1hsg")
+hiv
+```
+
+Let's first use the Mol* viewer to explore this structure.
+
+![My first view of HIV-Pr](1HSG.png)
+> Q4: Water molecules normally have 3 atoms. Why do we see just one atom per water molecule in this structure?
+
+That one atom is oxygen, and the reason hydrogen atoms are usually not shown in PDB structures is because 
+hydrogen has only one electron, making it very poor at scattering X-rays. 
+X-ray crystallography "sees" atoms by detecting how their electrons scatter X-rays. 
+Since hydrogen has so few electrons, it is almost invisible in these experiments, while oxygen (with more electrons) is much easier to detect. 
+That’s why you typically see only the oxygen atom for each water molecule in PDB files.
+
+>Q5: There is a critical “conserved” water molecule in the binding site. Can you identify this water molecule? What residue number does this water molecule have
+
+Yes, the water molecule is shown below in picture;
+The residue number is HOH308
+
+> Q6: Generate and save a figure clearly showing the two distinct chains of HIV-protease along with the ligand. You might also consider showing the catalytic residues ASP 25 in each chain and the critical water (we recommend “Ball & Stick” for these side-chains). Add this figure to your Quarto document.
+
+![My view of HIV-Pr with selection](1HSG_w:selections.png)
+## PDB objects in R
+
+```{r}
+hiv
+```
+> Q7: How many amino acid residues are there in this pdb object?
+
+There are 198 amino acid residues
+
+> Q8: Name one of the two non-protein residues?
+
+Water
+
+> Q9: How many protein chains are in this structure?
+
+2 protein chains
+
+```{r}
+head(hiv$atom)
+```
+Extract the sequence
+```{r}
+pdbseq(hiv)
+```
+because it's homodimer, so we only need chain A
+
+```{r}
+chainA_seq <- pdbseq (trim.pdb(hiv, chain = "A"))
+```
+
+I can interactively view these PDB objects in R with the new **bio3dview** package. This is not 
+```{r}
+# install.packages("pak")
+# pak::pak("bioboot/bio3dview")
+#install.packages("NGLVieweR")
+```
+
+```{r}
+library(bio3dview)
+library(bio3d)
+library(NGLVieweR)
+
+view.pdb(hiv) |>
+  setSpin()
+```
+
+```{r}
+# Select the important ASP 25 residue
+sele <- atom.select(hiv, resno=25)
+
+# and highlight them in spacefill representation
+view.pdb(hiv, cols=c("navy","teal"), 
+         highlight = sele,
+         highlight.style = "spacefill") |>
+  setRock()
+```
+
+Change some settings
+
+```{r}
+view.pdb(hiv, colorScheme = "sse")
+```
+
+```{r}
+sel <- atom.select(hiv, resno = 25)
+
+view.pdb(hiv, highlight = sel,
+         highlight.style = "spacefill",
+         colorScheme = "chain",
+         col = c("blue","orange"),
+         backgroundColor = "pink")
+
+```
+
+
+## Predict protein flexibility
+
+We can run a bioinfo calculation to predict protein dynamics -
+i.e. functional motions
+
+We'll use the `nma()` function:
+
+```{r}
+adk <- read.pdb("6s36")
+adk
+```
+
+```{r}
+m <- nma(adk)
+plot(m)
+```
+peaks in fluctuations are more flexible
+
+Generate a "trajectory" of a predicted motion
+```{r}
+mktrj(m, file="ADK_nma.pdb")
+```
+
+```{r}
+view.nma(m)
+```
+
