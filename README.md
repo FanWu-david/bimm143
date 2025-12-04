@@ -13,7 +13,7 @@ Classwork for [BIMM143 at UC San Diego](https://bioboot.github.io/bimm143_F25/) 
 
 - Class 09 [Structural Bioinformatics (pt1)](FA25_Class09/Class09.html)
 
-- Class 10 [Halloween Candy Mini-Project]()
+- Class 10 [Halloween Candy Mini-Project](FA25_Class10/Class10.md)
 
 - Class 11 [Structural Bioinformatics (pt2 AlphaFold)]()
 
