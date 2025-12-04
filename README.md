@@ -11,7 +11,7 @@ Classwork for [BIMM143 at UC San Diego](https://bioboot.github.io/bimm143_F25/) 
 
 - Class 08 [Breast cancer analysis mini-project](FA25_Class08/FA25_Class08.md)
 
-- Class 09 [Structural Bioinformatics (pt1)]()
+- Class 09 [Structural Bioinformatics (pt1)](FA25_Class09/Class09.html)
 
 - Class 10 [Halloween Candy Mini-Project]()
 
