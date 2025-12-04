@@ -2,6 +2,7 @@
 title: "Class 09 : Structural Bioinformatics (Part 1)"
 author: "Fan Wu(PID: A15127541)"
 format: html
+prefer-html: true
 ---
 
 The main database for structural biology is called the PDB. Let's have a look at what it contains:
